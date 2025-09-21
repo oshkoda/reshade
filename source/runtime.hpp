@@ -62,6 +62,8 @@ namespace reshade
 		void render_effects(api::command_list *cmd_list, api::resource_view rtv, api::resource_view rtv_srgb) final;
 		void render_technique(api::effect_technique handle, api::command_list *cmd_list, api::resource_view rtv, api::resource_view rtv_srgb) final;
 
+		bool is_preprocess_dlss_input_enabled() const { return _preprocess_dlss_input; }
+
 		/// <summary>
 		/// Captures a screenshot of the current back buffer resource and writes it to an image file on disk.
 		/// </summary>
@@ -267,6 +269,7 @@ namespace reshade
 
 		bool _effects_enabled = true;
 		bool _effects_rendered_this_frame = false;
+		bool _preprocess_dlss_input = false;
 		unsigned int _effects_key_data[4] = {};
 
 		std::chrono::system_clock::time_point _current_time;

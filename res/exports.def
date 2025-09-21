@@ -52,6 +52,9 @@ EXPORTS
 	D3D12SerializeRootSignature PRIVATE
 	D3D12SerializeVersionedRootSignature PRIVATE
 
+	; nvngx_dlss.dll
+	NVSDK_NGX_D3D12_EvaluateFeature PRIVATE
+
 	; ddraw.dll
 	DirectDrawCreate @8 PRIVATE
 	DirectDrawCreateEx @10 PRIVATE

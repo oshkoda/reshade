@@ -331,16 +331,18 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
 					}
 
 					// Only register OpenGL hooks when module is not called any D3D module name
-					if ((!is_d3d && !is_dxgi) || config.get("INSTALL", "HookOpenGL"))
-					{
-						reshade::hooks::register_module(get_system_path() / L"opengl32.dll");
+						if ((!is_d3d && !is_dxgi) || config.get("INSTALL", "HookOpenGL"))
+						{
+							reshade::hooks::register_module(get_system_path() / L"opengl32.dll");
+						}
+
+						// Do not register Vulkan hooks, since Vulkan layering mechanism is used instead
+
+						reshade::hooks::register_module(L"openvr_api.dll");
+						reshade::hooks::register_module(L"nvngx_dlss.dll");
+						reshade::hooks::register_module(L"_nvngx_dlss.dll");
+						}
 					}
-
-					// Do not register Vulkan hooks, since Vulkan layering mechanism is used instead
-
-					reshade::hooks::register_module(L"openvr_api.dll");
-				}
-			}
 
 			reshade::log::message(reshade::log::level::info, "Initialized.");
 			break;
