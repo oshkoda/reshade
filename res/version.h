@@ -1,0 +1,10 @@
+#pragma once
+
+#define VERSION_FULL 6.9.0.0
+#define VERSION_MAJOR 6
+#define VERSION_MINOR 9
+#define VERSION_REVISION 0
+#define VERSION_BUILD 0
+
+#define VERSION_STRING_FILE "6.9.0.0"
+#define VERSION_STRING_PRODUCT "6.9.0 UNOFFICIAL"
