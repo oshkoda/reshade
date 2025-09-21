@@ -11,6 +11,8 @@
 
 #include <mutex>
 
+struct ID3D11Resource;
+struct ID3D12Resource;
 struct NVSDK_NGX_Handle;
 
 #ifndef NVSDK_CONV
