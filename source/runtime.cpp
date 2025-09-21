@@ -913,6 +913,7 @@ void reshade::runtime::load_config()
 	config_get("GENERAL", "PerformanceMode", _performance_mode);
 	config_get("GENERAL", "PreprocessorDefinitions", _global_preprocessor_definitions);
 	config_get("GENERAL", "SkipLoadingDisabledEffects", _effect_load_skipping);
+	config_get("GENERAL", "PreprocessDLSSInput", _preprocess_dlss_input);
 	config_get("GENERAL", "TextureSearchPaths", _texture_search_paths);
 	config_get("GENERAL", "IntermediateCachePath", _effect_cache_path);
 
@@ -992,6 +993,7 @@ void reshade::runtime::save_config() const
 	config.set("GENERAL", "PerformanceMode", _performance_mode);
 	config.set("GENERAL", "PreprocessorDefinitions", _global_preprocessor_definitions);
 	config.set("GENERAL", "SkipLoadingDisabledEffects", _effect_load_skipping);
+	config.set("GENERAL", "PreprocessDLSSInput", _preprocess_dlss_input);
 	config.set("GENERAL", "TextureSearchPaths", _texture_search_paths);
 	config.set("GENERAL", "IntermediateCachePath", _effect_cache_path);
 

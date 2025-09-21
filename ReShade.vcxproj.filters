@@ -67,6 +67,9 @@
     <Filter Include="hooks\openxr">
       <UniqueIdentifier>{6e1dc50f-a845-48b7-bc1c-852c22956b19}</UniqueIdentifier>
     </Filter>
+    <Filter Include="hooks\nvngx">
+      <UniqueIdentifier>{b6a8c5f4-4f34-4dbf-8a3f-9bf6a8299bb4}</UniqueIdentifier>
+    </Filter>
     <Filter Include="hooks\vulkan">
       <UniqueIdentifier>{40ae025e-f912-4ebf-9a43-69d7c1a96d3e}</UniqueIdentifier>
     </Filter>
@@ -375,6 +378,9 @@
     <ClCompile Include="source\openxr\openxr_hooks_swapchain.cpp">
       <Filter>hooks\openxr</Filter>
     </ClCompile>
+    <ClCompile Include="source\nvngx\nvngx_hooks.cpp">
+      <Filter>hooks\nvngx</Filter>
+    </ClCompile>
     <ClCompile Include="source\openxr\openxr_impl_swapchain.cpp">
       <Filter>hooks\openxr</Filter>
     </ClCompile>
@@ -382,6 +388,9 @@
       <Filter>core\utils</Filter>
     </ClCompile>
     <ClCompile Include="source\runtime.cpp">
+      <Filter>core\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="source\runtime_dlss_preprocess.cpp">
       <Filter>core\runtime</Filter>
     </ClCompile>
     <ClCompile Include="source\runtime_api.cpp">
@@ -729,6 +738,9 @@
       <Filter>api</Filter>
     </ClInclude>
     <ClInclude Include="source\runtime.hpp">
+      <Filter>core\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="source\runtime_dlss_preprocess.hpp">
       <Filter>core\runtime</Filter>
     </ClInclude>
     <ClInclude Include="source\runtime_internal.hpp">
