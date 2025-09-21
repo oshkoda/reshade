@@ -2078,6 +2078,9 @@ void reshade::runtime::draw_gui_settings()
 			reload_effects(!_effect_load_skipping);
 		}
 
+		modified |= ImGui::Checkbox(_("Preprocess DLSS Input Image"), &_preprocess_dlss_input);
+		ImGui::SetItemTooltip(_("Apply ReShade techniques to the low resolution image provided to DLSS before upscaling."));
+
 		if (ImGui::Button(_("Clear effect cache"), ImVec2(ImGui::CalcItemWidth(), 0)))
 			clear_effect_cache();
 		ImGui::SetItemTooltip(_("Clear effect cache located in \"%s\"."), _effect_cache_path.u8string().c_str());
