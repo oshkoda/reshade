@@ -5,6 +5,7 @@
 
 #include "runtime.hpp"
 #include "runtime_manager.hpp"
+#include "runtime_dlss_preprocess.hpp"
 #include "ini_file.hpp"
 #include <cassert>
 #include <shared_mutex>
@@ -46,6 +47,9 @@ void reshade::create_effect_runtime(api::swapchain *swapchain, api::command_queu
 		return;
 
 	swapchain->create_private_data<reshade::runtime>(swapchain, graphics_queue, config.path(), vr);
+
+	if (auto runtime = swapchain->get_private_data<reshade::runtime>())
+		register_preprocess_runtime(swapchain->get_device(), runtime);
 }
 void reshade::destroy_effect_runtime(api::swapchain *swapchain)
 {
@@ -57,6 +61,8 @@ void reshade::destroy_effect_runtime(api::swapchain *swapchain)
 		const std::unique_lock<std::shared_mutex> lock(s_runtime_config_names_mutex);
 
 		s_runtime_config_names.erase(config_name);
+
+		unregister_preprocess_runtime(swapchain->get_device(), runtime);
 	}
 
 	swapchain->destroy_private_data<reshade::runtime>();
