@@ -7,12 +7,104 @@
 
 #include "d3d12_impl_command_list.hpp"
 
+#include <vector>
+
 struct D3D12Device;
 
 struct DECLSPEC_UUID("479B29E3-9A2C-11D0-B696-00A0C903487A") D3D12GraphicsCommandList final : ID3D12GraphicsCommandList10, public reshade::d3d12::command_list_impl
 {
-	D3D12GraphicsCommandList(D3D12Device *device, ID3D12GraphicsCommandList *original);
-	~D3D12GraphicsCommandList();
+        struct state_snapshot
+        {
+                state_snapshot() = default;
+                state_snapshot(const state_snapshot &) = delete;
+                state_snapshot &operator=(const state_snapshot &) = delete;
+                ~state_snapshot()
+                {
+                        release();
+                }
+
+                void release()
+                {
+                        if (pipeline_state != nullptr)
+                        {
+                                pipeline_state->Release();
+                                pipeline_state = nullptr;
+                        }
+                        if (raytracing_pipeline_state != nullptr)
+                        {
+                                raytracing_pipeline_state->Release();
+                                raytracing_pipeline_state = nullptr;
+                        }
+                        for (ID3D12RootSignature *&signature : root_signatures)
+                        {
+                                if (signature != nullptr)
+                                {
+                                        signature->Release();
+                                        signature = nullptr;
+                                }
+                        }
+                        for (ID3D12DescriptorHeap *&heap : descriptor_heaps)
+                        {
+                                if (heap != nullptr)
+                                {
+                                        heap->Release();
+                                        heap = nullptr;
+                                }
+                        }
+
+                        root_states[0].clear();
+                        root_states[1].clear();
+                }
+
+                struct root_parameter_state
+                {
+                        void clear()
+                        {
+                                descriptor_tables.clear();
+                                constant_buffer_views.clear();
+                                shader_resource_views.clear();
+                                unordered_access_views.clear();
+                                constants.clear();
+                                constant_masks.clear();
+                        }
+
+                        std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> descriptor_tables;
+                        std::vector<D3D12_GPU_VIRTUAL_ADDRESS> constant_buffer_views;
+                        std::vector<D3D12_GPU_VIRTUAL_ADDRESS> shader_resource_views;
+                        std::vector<D3D12_GPU_VIRTUAL_ADDRESS> unordered_access_views;
+                        std::vector<std::vector<uint32_t>> constants;
+                        std::vector<std::vector<uint8_t>> constant_masks;
+                } root_states[2];
+
+                ID3D12PipelineState *pipeline_state = nullptr;
+                ID3D12StateObject *raytracing_pipeline_state = nullptr;
+                ID3D12RootSignature *root_signatures[2] = {};
+                ID3D12DescriptorHeap *descriptor_heaps[2] = {};
+                UINT num_render_targets = 0;
+                D3D12_CPU_DESCRIPTOR_HANDLE render_targets[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT] = {};
+                BOOL render_targets_single_handle_range = FALSE;
+                D3D12_CPU_DESCRIPTOR_HANDLE depth_stencil = {};
+                UINT num_viewports = 0;
+                D3D12_VIEWPORT viewports[D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE] = {};
+                UINT num_scissor_rects = 0;
+                D3D12_RECT scissor_rects[D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE] = {};
+                D3D12_PRIMITIVE_TOPOLOGY primitive_topology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+                float blend_factor[4] = {};
+                bool blend_factor_valid = false;
+                bool depth_bias_valid = false;
+                float depth_bias[3] = {};
+                bool stencil_ref_valid = false;
+                UINT stencil_ref = 0;
+                bool front_back_stencil_valid = false;
+                UINT front_stencil_ref = 0;
+                UINT back_stencil_ref = 0;
+        };
+
+        D3D12GraphicsCommandList(D3D12Device *device, ID3D12GraphicsCommandList *original);
+        ~D3D12GraphicsCommandList();
+
+        void capture_state(state_snapshot &state) const;
+        void apply_state(const state_snapshot &state);
 
 	#pragma region IUnknown
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObj) override;
@@ -128,12 +220,86 @@ struct DECLSPEC_UUID("479B29E3-9A2C-11D0-B696-00A0C903487A") D3D12GraphicsComman
 	#pragma endregion
 	#pragma region ID3D12GraphicsCommandList10
 	void   STDMETHODCALLTYPE SetProgram(const D3D12_SET_PROGRAM_DESC *pDesc) override;
-	void   STDMETHODCALLTYPE DispatchGraph(const D3D12_DISPATCH_GRAPH_DESC *pDesc) override;
-	#pragma endregion
+        void   STDMETHODCALLTYPE DispatchGraph(const D3D12_DISPATCH_GRAPH_DESC *pDesc) override;
+        #pragma endregion
 
-	bool check_and_upgrade_interface(REFIID riid);
+        bool check_and_upgrade_interface(REFIID riid);
 
-	ULONG _ref = 1;
-	unsigned short _interface_version = 0;
-	D3D12Device *const _device;
+        ULONG _ref = 1;
+        unsigned short _interface_version = 0;
+        D3D12Device *const _device;
+
+private:
+        struct root_binding_state
+        {
+                void clear()
+                {
+                        descriptor_tables.clear();
+                        constant_buffer_views.clear();
+                        shader_resource_views.clear();
+                        unordered_access_views.clear();
+                        constants.clear();
+                        constant_masks.clear();
+                }
+
+                std::vector<D3D12_GPU_DESCRIPTOR_HANDLE> descriptor_tables;
+                std::vector<D3D12_GPU_VIRTUAL_ADDRESS> constant_buffer_views;
+                std::vector<D3D12_GPU_VIRTUAL_ADDRESS> shader_resource_views;
+                std::vector<D3D12_GPU_VIRTUAL_ADDRESS> unordered_access_views;
+                std::vector<std::vector<uint32_t>> constants;
+                std::vector<std::vector<uint8_t>> constant_masks;
+        };
+
+        template <typename T>
+        static void ensure_size(std::vector<T> &container, size_t index)
+        {
+                if (container.size() <= index)
+                        container.resize(index + 1);
+        }
+
+        template <typename T>
+        static void ensure_size(std::vector<T> &container, size_t index, const T &value)
+        {
+                if (container.size() <= index)
+                        container.resize(index + 1, value);
+        }
+
+        root_binding_state &_get_root_state(bool compute_stage)
+        {
+                return compute_stage ? _root_binding_state[1] : _root_binding_state[0];
+        }
+
+        void _reset_root_state(bool compute_stage)
+        {
+                _get_root_state(compute_stage).clear();
+        }
+
+        void _set_root_descriptor_table(bool compute_stage, UINT index, D3D12_GPU_DESCRIPTOR_HANDLE handle);
+        void _set_root_constant_buffer_view(bool compute_stage, UINT index, D3D12_GPU_VIRTUAL_ADDRESS address);
+        void _set_root_shader_resource_view(bool compute_stage, UINT index, D3D12_GPU_VIRTUAL_ADDRESS address);
+        void _set_root_unordered_access_view(bool compute_stage, UINT index, D3D12_GPU_VIRTUAL_ADDRESS address);
+        void _set_root_32bit_constant(bool compute_stage, UINT index, UINT offset, UINT value);
+        void _set_root_32bit_constants(bool compute_stage, UINT index, UINT dest_offset, UINT count, const void *data);
+
+        ID3D12PipelineState *_current_pipeline_state = nullptr;
+        ID3D12StateObject *_current_raytracing_pipeline_state = nullptr;
+        UINT _current_num_render_targets = 0;
+        D3D12_CPU_DESCRIPTOR_HANDLE _current_render_targets[D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT] = {};
+        BOOL _current_rts_single_handle = FALSE;
+        D3D12_CPU_DESCRIPTOR_HANDLE _current_depth_stencil = {};
+        UINT _current_num_viewports = 0;
+        D3D12_VIEWPORT _current_viewports[D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE] = {};
+        UINT _current_num_scissor_rects = 0;
+        D3D12_RECT _current_scissor_rects[D3D12_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE] = {};
+        D3D12_PRIMITIVE_TOPOLOGY _current_primitive_topology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+        float _current_blend_factor[4] = {};
+        bool _current_blend_factor_valid = false;
+        float _current_depth_bias[3] = {};
+        bool _current_depth_bias_valid = false;
+        UINT _current_stencil_ref = 0;
+        bool _current_stencil_ref_valid = false;
+        UINT _current_front_stencil_ref = 0;
+        UINT _current_back_stencil_ref = 0;
+        bool _current_front_back_stencil_valid = false;
+        root_binding_state _root_binding_state[2];
 };
