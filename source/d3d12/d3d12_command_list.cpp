@@ -130,8 +130,16 @@ void D3D12GraphicsCommandList::capture_state(state_snapshot &state) const
         state.front_stencil_ref = _current_front_stencil_ref;
         state.back_stencil_ref = _current_back_stencil_ref;
 
-        state.root_states[0] = _root_binding_state[0];
-        state.root_states[1] = _root_binding_state[1];
+        const auto copy_root_state = [](const root_binding_state &src, state_snapshot::root_parameter_state &dst) {
+                dst.descriptor_tables = src.descriptor_tables;
+                dst.constant_buffer_views = src.constant_buffer_views;
+                dst.shader_resource_views = src.shader_resource_views;
+                dst.unordered_access_views = src.unordered_access_views;
+                dst.constants = src.constants;
+                dst.constant_masks = src.constant_masks;
+        };
+        copy_root_state(_root_binding_state[0], state.root_states[0]);
+        copy_root_state(_root_binding_state[1], state.root_states[1]);
 }
 void D3D12GraphicsCommandList::apply_state(const state_snapshot &state)
 {
