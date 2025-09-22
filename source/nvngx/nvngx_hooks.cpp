@@ -123,9 +123,13 @@ extern "C" NVSDK_NGX_Result NVSDK_CONV NVSDK_NGX_D3D12_EvaluateFeature(
 					const reshade::api::resource_usage state_before[] = { reshade::api::resource_usage::shader_resource };
 					const reshade::api::resource_usage state_target[] = { reshade::api::resource_usage::render_target };
 
-					cmd_list_impl->barrier(1, resources, state_before, state_target);
-					runtime_instance->render_effects(cmd_list_impl, rtv, rtv_srgb);
-					cmd_list_impl->barrier(1, resources, state_target, state_before);
+                                        D3D12GraphicsCommandList::state_snapshot previous_state;
+                                        command_list_proxy->capture_state(previous_state);
+
+                                        cmd_list_impl->barrier(1, resources, state_before, state_target);
+                                        runtime_instance->render_effects(cmd_list_impl, rtv, rtv_srgb);
+                                        command_list_proxy->apply_state(previous_state);
+                                        cmd_list_impl->barrier(1, resources, state_target, state_before);
 
 					if (rtv_srgb != rtv)
 						device_impl->destroy_resource_view(rtv_srgb);
